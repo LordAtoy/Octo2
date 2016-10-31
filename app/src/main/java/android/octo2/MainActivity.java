@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            return true;
+            Snackbar.make((findViewById((android.R.id.content))), "You just pressed the settings button", Snackbar.LENGTH_SHORT).setAction("Action", null).show();
         }
 
         return super.onOptionsItemSelected(item);

@@ -1,13 +1,15 @@
 package android.octo2;
 
+import android.content.ClipData;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.view.DragEvent;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -15,38 +17,75 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+        findViewById(R.id.myimage1).setOnLongClickListener(new MyClickListener());
+        findViewById(R.id.myimage2).setOnLongClickListener(new MyClickListener());
+        findViewById(R.id.myimage3).setOnLongClickListener(new MyClickListener());
+        findViewById(R.id.myimage4).setOnLongClickListener(new MyClickListener());
+        findViewById(R.id.topleft).setOnDragListener(new MyDragListener());
+        findViewById(R.id.topright).setOnDragListener(new MyDragListener());
+        findViewById(R.id.bottomleft).setOnDragListener(new MyDragListener());
+        findViewById(R.id.bottomright).setOnDragListener(new MyDragListener());
+    }
+
+    // This defines your touch listener
+    private final class MyClickListener implements View.OnLongClickListener {
+        public boolean onLongClick(View view) {
+            ClipData data = ClipData.newPlainText("", "");
+            View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(view);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                view.startDragAndDrop(data, shadowBuilder, view, 0);
+            } else {
+                view.startDrag(data, shadowBuilder, view, 0);
             }
-        });
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            Snackbar.make((findViewById((android.R.id.content))), "You just pressed the settings button", Snackbar.LENGTH_SHORT).setAction("Action", null).show();
+            view.setVisibility(View.INVISIBLE);
+            return true;
         }
+    }
 
-        return super.onOptionsItemSelected(item);
+    class MyDragListener implements View.OnDragListener {
+        Drawable enterShape = ResourcesCompat.getDrawable(getResources(), R.drawable.shape_droptarget, null);
+        Drawable normalShape = ResourcesCompat.getDrawable(getResources(), R.drawable.shapes, null);
+
+        @Override
+        public boolean onDrag(View v, DragEvent event) {
+            switch (event.getAction()) {
+                case DragEvent.ACTION_DRAG_STARTED:
+                    // do nothing
+                    break;
+                case DragEvent.ACTION_DRAG_ENTERED:
+                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN){
+                        v.setBackground(enterShape);
+                    } else {
+                        v.setBackgroundDrawable(enterShape);
+                    }
+                    break;
+                case DragEvent.ACTION_DRAG_EXITED:
+                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN){
+                        v.setBackground(normalShape);
+                    } else {
+                        v.setBackgroundDrawable(normalShape);
+                    }
+                    break;
+                case DragEvent.ACTION_DROP:
+                    // Dropped, reassign View to ViewGroup
+                    View view = (View) event.getLocalState();
+                    ViewGroup owner = (ViewGroup) view.getParent();
+                    owner.removeView(view);
+                    LinearLayout container = (LinearLayout) v;
+                    container.addView(view);
+                    view.setVisibility(View.VISIBLE);
+                    break;
+                case DragEvent.ACTION_DRAG_ENDED:
+                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN){
+                        v.setBackground(normalShape);
+                    } else {
+                        v.setBackgroundDrawable(normalShape);
+                    }
+                default:
+                    break;
+            }
+            return true;
+        }
     }
 }
